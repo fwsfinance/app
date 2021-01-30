@@ -1,63 +1,60 @@
 <template>
-  <div class="container">
-    <div>
-      <Logo />
-      <h1 class="title">wallstreetbets</h1>
-      <div class="links">
-        <a
-          href="https://nuxtjs.org/"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="button--green"
-        >
-          Documentation
-        </a>
-        <a
-          href="https://github.com/nuxt/nuxt.js"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="button--grey"
-        >
-          GitHub
-        </a>
-      </div>
+  <div class="container py-5">
+    <b-alert v-if="error" variant="danger" show>Error: {{ error }}</b-alert>
+    <span v-if="loading">loading...</span>
+    <a v-if="!accessToken" :href="loginUrl" class="btn btn-primary">Login</a>
+    <div v-if="accessToken">
+      <h5>You have {{ karma }} karma in the subreddit!</h5>
+      <button @click="claim()" class="btn btn-primary">Claim</button>
     </div>
   </div>
 </template>
 
 <script>
-export default {}
+export default {
+  data() {
+    return {
+      loginUrl: `https://www.reddit.com/api/v1/authorize.compact?client_id=${process.env.REDDIT_CLIENT_ID}&response_type=code&state=random&redirect_uri=${process.env.REDIRECT_URL}&duration=temporary&scope=mysubreddits,identity`,
+      accessToken: null,
+      error: null,
+      loading: false,
+      karma: 0,
+    }
+  },
+  mounted() {
+    const urlParams = new URLSearchParams(window.location.search)
+    const error = urlParams.get('error')
+    const code = urlParams.get('code')
+    if (code && !error) {
+      this.loading = true
+      this.$axios
+        .$post(process.env.API_URL + '/reddit-access-token', {
+          code,
+        })
+        .then((response) => {
+          if (response.access_token) {
+            this.accessToken = response.access_token
+            this.$router.push('/')
+            this.$axios
+              .$post(process.env.API_URL + '/reddit-karma', {
+                accessToken: this.accessToken,
+              })
+              .then((response) => {
+                response.data.forEach((subreddit) => {
+                  if (subreddit.sr === 'finance') {
+                    this.karma = subreddit.comment_karma + subreddit.link_karma
+                  }
+                })
+              })
+          } else {
+            this.error = response.error
+          }
+        })
+        .finally(() => (this.loading = false))
+    }
+  },
+  methods: {
+    claim() {},
+  },
+}
 </script>
-
-<style>
-.container {
-  margin: 0 auto;
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-}
-
-.title {
-  font-family: 'Quicksand', 'Source Sans Pro', -apple-system, BlinkMacSystemFont,
-    'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  display: block;
-  font-weight: 300;
-  font-size: 100px;
-  color: #35495e;
-  letter-spacing: 1px;
-}
-
-.subtitle {
-  font-weight: 300;
-  font-size: 42px;
-  color: #526488;
-  word-spacing: 5px;
-  padding-bottom: 15px;
-}
-
-.links {
-  padding-top: 15px;
-}
-</style>

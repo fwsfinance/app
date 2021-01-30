@@ -1,9 +1,11 @@
 export default {
   // Disable server-side rendering: https://go.nuxtjs.dev/ssr-mode
-  ssr: false,
+  ssr: true,
 
   // Target: https://go.nuxtjs.dev/config-target
-  target: 'static',
+  target: 'server',
+
+  serverMiddleware: ['~/api/index'],
 
   // Global page headers: https://go.nuxtjs.dev/config-head
   head: {
@@ -29,6 +31,13 @@ export default {
   buildModules: [
     // https://go.nuxtjs.dev/eslint
     '@nuxtjs/eslint-module',
+    [
+      '@nuxtjs/dotenv',
+      {
+        path: './',
+        only: ['API_URL', 'REDIRECT_URL', 'REDDIT_CLIENT_ID'],
+      },
+    ],
   ],
 
   // Modules: https://go.nuxtjs.dev/config-modules
