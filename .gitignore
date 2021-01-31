@@ -74,6 +74,9 @@ dist
 # vuepress build output
 .vuepress/dist
 
+# truffle build output
+build
+
 # Serverless directories
 .serverless
 
