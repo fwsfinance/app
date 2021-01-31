@@ -1,3 +1,5 @@
+import fs from 'fs'
+
 export default {
   // Disable server-side rendering: https://go.nuxtjs.dev/ssr-mode
   ssr: true,
@@ -22,7 +24,7 @@ export default {
   css: [],
 
   // Plugins to run before rendering page: https://go.nuxtjs.dev/config-plugins
-  plugins: [],
+  plugins: ['@/plugins/web3'],
 
   // Auto import components: https://go.nuxtjs.dev/config-components
   components: true,
@@ -35,10 +37,21 @@ export default {
       '@nuxtjs/dotenv',
       {
         path: './',
-        only: ['API_URL', 'REDIRECT_URL', 'REDDIT_CLIENT_ID'],
+        only: [
+          'API_URL',
+          'REDIRECT_URL',
+          'REDDIT_CLIENT_ID',
+          'FWS_ADDRESS',
+          'CONFIRM_GAS',
+        ],
       },
     ],
   ],
+
+  env: {
+    FWS_ABI: JSON.parse(fs.readFileSync('./FuckWallStreet.json').toString())
+      .abi,
+  },
 
   // Modules: https://go.nuxtjs.dev/config-modules
   modules: [
