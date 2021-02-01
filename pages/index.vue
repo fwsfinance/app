@@ -2,7 +2,7 @@
   <div
     class="container py-5 d-flex flex-column justify-content-center align-items-center"
   >
-    <img src="logo.png" width="600" />
+    <img src="header.png" />
     <h5 class="mb-4 text-center"></h5>
     <div class="bg-brand px-5 py-4 text-center">
       <div v-if="isEthereumBrowser">
