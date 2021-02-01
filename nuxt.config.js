@@ -51,6 +51,7 @@ export default {
           'REDDIT_CLIENT_ID',
           'FWS_ADDRESS',
           'CONFIRM_GAS',
+          'SUBREDDIT',
         ],
       },
     ],
