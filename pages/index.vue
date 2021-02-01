@@ -1,16 +1,41 @@
 <template>
-  <div class="container py-5">
-    <b-alert v-if="error" variant="danger" show>Error: {{ error }}</b-alert>
-    <span v-if="loading">loading...</span>
-    <a v-if="!accessToken" :href="loginUrl" class="btn btn-primary">Login</a>
-    <div v-if="accessToken && user && karma">
-      <h5>Hey {{ user.name }}! You have {{ karma }} karma in the subreddit!</h5>
-      <button v-if="ethAddress" class="btn btn-primary" @click="claim()">
-        Claim Tokens
-      </button>
-      <button v-else class="btn btn-primary" @click="connect()">
-        Connect Wallet
-      </button>
+  <div
+    class="container py-5 d-flex flex-column justify-content-center align-items-center"
+  >
+    <img src="logo.png" width="600" />
+    <h5 class="mb-4 text-center"></h5>
+    <div class="bg-brand px-5 py-4 text-center">
+      <div v-if="isEthereumBrowser">
+        <b-alert v-if="error" variant="danger" show>Error: {{ error }}</b-alert>
+        <div v-if="loading">loading...</div>
+        <a
+          v-if="!loading && !accessToken"
+          :href="loginUrl"
+          class="btn btn-brand btn-lg"
+          >Connect Reddit Account</a
+        >
+        <div v-if="accessToken && user && karma">
+          <h5>Hey {{ user.name }}!</h5>
+          <button
+            v-if="ethAddress"
+            class="btn btn-brand btn-lg"
+            @click="claim()"
+          >
+            Claim Tokens
+          </button>
+          <button v-else class="btn btn-brand btn-lg" @click="connect()">
+            Connect Wallet
+          </button>
+        </div>
+      </div>
+      <div v-else>
+        <a
+          href="https://metamask.io"
+          target="_blank"
+          class="btn btn-brand btn-lg"
+          >Install MetaMask</a
+        >
+      </div>
     </div>
   </div>
 </template>
@@ -28,7 +53,13 @@ export default {
       ethAddress: null,
     }
   },
+  computed: {
+    isEthereumBrowser() {
+      return typeof window !== 'undefined' && window.ethereum
+    },
+  },
   mounted() {
+    this.connect()
     const urlParams = new URLSearchParams(window.location.search)
     const error = urlParams.get('error')
     const code = urlParams.get('code')
