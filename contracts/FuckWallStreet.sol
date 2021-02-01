@@ -28,7 +28,7 @@ contract FuckWallStreet is Ownable, ERC20, ERC20Capped {
   }
 
   function claimRequest(string calldata _redditUser) public payable {
-    require(msg.value > 0, "Oracle call must be payed for.");
+    require(msg.value > 10000 * tx.gasprice, "Oracle call must be payed for.");
     payable(owner()).transfer(msg.value);
     bytes32 requestId = bytes32(keccak256(abi.encodePacked(_redditUser, block.timestamp)));
     claims[requestId] = Claim(_redditUser, msg.sender, 0, false);
