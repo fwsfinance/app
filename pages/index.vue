@@ -17,6 +17,10 @@
 
           <div v-if="ethAddress">
             <div v-if="claimAmount">
+              <div v-if="claimError">
+                Something went wrong!<br />
+                {{ claimError }}
+              </div>
               <div v-if="showClaimSuccess">
                 Perfect! Look into your wallet now. You should have
                 {{ claimAmount }} FWS now.<br />
@@ -25,10 +29,10 @@
               </div>
               <div v-else>
                 Great! You can claim {{ claimAmount }} fun coupons.
-                <button class="btn btn-brand btn-lg" @click="claim()">
+                <button class="btn btn-brand btn-lg mt-3" @click="claim()">
                   Ok, cool. Now give it to me!
                 </button>
-                <div v-if="isMod">
+                <div v-if="isMod" class="mt-3">
                   Oh and by the way... Each time a user claims tokens, a 5%
                   bonus will be automatically distributed to all moderators, who
                   already claimed theirs. ;)
@@ -38,6 +42,9 @@
             <div v-else class="pt-3">
               Too bad. You are not eligable to claim anything. :(<br />
               Your account is either too new or you weren't involved enough.
+              <span v-if="!subscription">
+                It seems you didn't even join the subreddit.
+              </span>
             </div>
           </div>
           <button v-else class="btn btn-brand btn-lg" @click="connect()">
@@ -67,7 +74,7 @@ export default {
       loginUrl: `https://www.reddit.com/api/v1/authorize.compact?client_id=${process.env.REDDIT_CLIENT_ID}&response_type=code&state=random&redirect_uri=${process.env.REDIRECT_URL}&duration=temporary&scope=mysubreddits,identity,history`,
       accessToken: null,
       showClaimSuccess: false,
-      showClaimError: false,
+      claimError: false,
       showDataError: false,
       loading: false,
       ethAddress: null,
@@ -188,15 +195,16 @@ export default {
     },
     claim() {
       if (this.user) {
-        this.$web3.eth.getGasPrice((error, gasPrice) => {
-          if (error) {
-            console.log(error)
-          } else {
+        this.$axios
+          .$post(process.env.API_URL + '/gasprice')
+          .then((gasPrice) => {
             this.$fws.methods
               .claimRequest(this.user.name)
               .send({
                 from: this.ethAddress,
-                value: gasPrice * process.env.CONFIRM_GAS * 1.1,
+                value: (
+                  BigInt(gasPrice) * BigInt(process.env.CONFIRM_GAS)
+                ).toString(),
               })
               .then((tx) => {
                 this.$axios
@@ -208,10 +216,9 @@ export default {
                   .then((tx) => {
                     this.showClaimSuccess = true
                   })
-                  .catch(() => (this.showClaimError = true))
+                  .catch((e) => (this.claimError = e))
               })
-          }
-        })
+          })
       }
     },
   },
