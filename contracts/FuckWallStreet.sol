@@ -15,27 +15,36 @@ contract FuckWallStreet is Ownable, ERC20, ERC20Capped {
     uint8 tier;
     bool confirmed;
   }
-  mapping(bytes32 => Claim) public claims;
-  mapping(string => bool) public hasClaimed;
+  mapping(bytes32 => Claim) public claims; // (oracle) requestId => Claim
+  mapping(string => bool) public hasClaimed; // username => bool
   address[] private mods;
   uint256[] private tierAmounts;
+  uint256 public oracleFee;
 
   constructor()
     public
     ERC20("FuckWallStreet", "FWS")
     ERC20Capped(2750000000 * 10**18)
   {
-    tierAmounts.push(500 * 10**18);
-    tierAmounts.push(750 * 10**18);
-    tierAmounts.push(1500 * 10**18);
+    tierAmounts.push(500 * 10**18); // 500 FWS for tier0
+    tierAmounts.push(750 * 10**18); // 750 FWS for tier1
+    tierAmounts.push(1500 * 10**18); // 1500 FWS for tier2
+    oracleFee = 0.001 * 10 ** 18; // 0.001 ETH fee for each claim
   }
 
   function _beforeTokenTransfer(address _from, address _to, uint256 _amount) internal override(ERC20, ERC20Capped) {
     super._beforeTokenTransfer(_from, _to, _amount);
   }
 
+  function setOracleFee(uint256 _fee) public onlyOwner {
+    oracleFee = _fee;
+  }
+
   function claimRequest(string calldata _redditUser) public payable {
-    require(msg.value > 10000 * tx.gasprice, "Oracle call must be payed for.");
+    require(hasClaimed[_redditUser] == false, "You already claimed your airdrop.");
+    require(msg.value > oracleFee, "Oracle fee must be payed.");
+
+    // forward fee to oracle (owner) and store request
     payable(owner()).transfer(msg.value);
     bytes32 requestId = bytes32(keccak256(abi.encodePacked(_redditUser, block.timestamp)));
     claims[requestId] = Claim(_redditUser, msg.sender, 0, false);
