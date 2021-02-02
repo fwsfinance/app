@@ -222,7 +222,6 @@ export default {
           .oracleFee()
           .call()
           .then((fee) => {
-            console.log(fee)
             this.$fws.methods
               .claimRequest(this.user.name)
               .send({
