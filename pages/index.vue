@@ -9,7 +9,7 @@
         <b-alert v-if="showDataError" variant="danger" show>
           Error: Something went wrong when analyzing your reddit account.
         </b-alert>
-        <div v-if="loading">
+        <div v-if="loadingData">
           Ok, let's see if you can claim something. One second please...
         </div>
         <div v-else-if="user">
@@ -29,8 +29,16 @@
               </div>
               <div v-else>
                 <div>Great! You can claim {{ claimAmount }} fun coupons.</div>
-                <button class="btn btn-brand btn-lg mt-3" @click="claim()">
-                  Ok, cool. Now give it to me!
+                <button
+                  class="btn btn-brand btn-lg mt-3"
+                  :disabled="requestingClaim || confirmingClaim"
+                  @click="claim()"
+                >
+                  <span v-if="requestingClaim">sending request...</span>
+                  <span v-else-if="confirmingClaim">
+                    waiting for confirmation...
+                  </span>
+                  <span v-else>Ok, cool. Now give it to me!</span>
                 </button>
                 <div v-if="isMod" class="mt-3">
                   Oh and by the way... Each time a user claims tokens, a 5%
@@ -76,7 +84,9 @@ export default {
       showClaimSuccess: false,
       claimError: false,
       showDataError: false,
-      loading: false,
+      loadingData: false,
+      requestingClaim: false,
+      confirmingClaim: false,
       ethAddress: null,
       user: null,
       karma: 0,
@@ -143,7 +153,7 @@ export default {
     const error = urlParams.get('error')
     const code = urlParams.get('code')
     if (code && !error) {
-      this.loading = true
+      this.loadingData = true
       this.$axios
         .$post(process.env.API_URL + '/access-token', {
           code,
@@ -180,11 +190,11 @@ export default {
             .catch(() => (this.showDataError = true))
             .finally(() => {
               setTimeout(() => {
-                this.loading = false
+                this.loadingData = false
               }, 3000)
             })
         })
-        .catch(() => (this.loading = false))
+        .catch(() => (this.loadingData = false))
     }
   },
   methods: {
@@ -195,6 +205,7 @@ export default {
     },
     claim() {
       if (this.user) {
+        this.requestingClaim = true
         this.$axios
           .$post(process.env.API_URL + '/gasprice')
           .then((gasPrice) => {
@@ -207,18 +218,21 @@ export default {
                 ).toString(),
               })
               .then((tx) => {
+                this.requestingClaim = false
+                this.confirmingClaim = true
                 this.$axios
                   .$post(process.env.API_URL + '/confirm-claim', {
                     accessToken: this.accessToken,
                     requestId:
                       tx.events.ClaimRequestEvent.returnValues.requestId,
                   })
-                  .then((tx) => {
-                    this.showClaimSuccess = true
-                  })
+                  .then((tx) => (this.showClaimSuccess = true))
                   .catch((e) => (this.claimError = e))
+                  .finally(() => (this.confirmingClaim = false))
               })
+              .catch((e) => (this.requestingClaim = false))
           })
+          .catch((e) => (this.requestingClaim = false))
       }
     },
   },
