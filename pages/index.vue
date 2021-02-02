@@ -28,7 +28,7 @@
                 address:<br /><b>{{ fwsAddress }}</b>
               </div>
               <div v-else>
-                Great! You can claim {{ claimAmount }} fun coupons.
+                <div>Great! You can claim {{ claimAmount }} fun coupons.</div>
                 <button class="btn btn-brand btn-lg mt-3" @click="claim()">
                   Ok, cool. Now give it to me!
                 </button>
