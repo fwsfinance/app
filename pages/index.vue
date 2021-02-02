@@ -17,10 +17,10 @@
 
           <div v-if="ethAddress">
             <div v-if="claimAmount">
-              <div v-if="claimError">
+              <b-alert v-if="claimError" variant="danger" show>
                 Something went wrong!<br />
                 {{ claimError }}
-              </div>
+              </b-alert>
               <div v-if="showClaimSuccess">
                 Perfect! Look into your wallet now. You should have
                 {{ claimAmount }} FWS now.<br />
