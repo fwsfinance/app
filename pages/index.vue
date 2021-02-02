@@ -29,7 +29,9 @@
                   Ok, cool. Now give it to me!
                 </button>
                 <div v-if="isMod">
-                  Oh and by the way... Each time a user claims tokens, a 5% bonus will be automatically distributed to all moderators, who already claimed theirs. ;)
+                  Oh and by the way... Each time a user claims tokens, a 5%
+                  bonus will be automatically distributed to all moderators, who
+                  already claimed theirs. ;)
                 </div>
               </div>
             </div>
