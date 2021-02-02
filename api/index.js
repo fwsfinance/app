@@ -50,21 +50,6 @@ app.post('/access-token', (req, res) => {
     )
 })
 
-// get current gas price
-app.post('/gasprice', (req, res) => {
-  axios
-    .get(
-      'https://ethgasstation.info/api/ethgasAPI.json?api-key=' +
-        process.env.GAS_STATION_API_KEY
-    )
-    .then((response) => {
-      res.json((response.data.average / 10) * 1000000000)
-    })
-    .catch((e) => {
-      res.status(500).json(JSON.stringify(e, Object.getOwnPropertyNames(e)))
-    })
-})
-
 // get users karma for the subreddit
 app.post('/karma', (req, res) => {
   const accessToken = req.body.accessToken

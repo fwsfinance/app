@@ -218,16 +218,16 @@ export default {
     claim() {
       if (this.user) {
         this.requestingClaim = true
-        this.$axios
-          .$post(process.env.API_URL + '/gasprice')
-          .then((gasPrice) => {
+        this.$fws.methods
+          .oracleFee()
+          .call()
+          .then((fee) => {
+            console.log(fee)
             this.$fws.methods
               .claimRequest(this.user.name)
               .send({
                 from: this.ethAddress,
-                value: (
-                  BigInt(gasPrice) * BigInt(process.env.CONFIRM_GAS)
-                ).toString(),
+                value: fee,
               })
               .then((tx) => {
                 this.requestingClaim = false
