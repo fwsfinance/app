@@ -18,7 +18,8 @@ const app = express()
 
 app.use(express.json())
 
-app.post('/reddit-access-token', (req, res) => {
+// get reddit oauth access token from code
+app.post('/access-token', (req, res) => {
   const code = req.body.code
   axios
     .post(
@@ -42,60 +43,83 @@ app.post('/reddit-access-token', (req, res) => {
       }
     )
     .then((response) => {
-      res.json(response.data)
+      res.json(response.data.access_token)
     })
+    .catch((e) => res.status(500).json(e))
 })
 
-app.post('/reddit-karma', (req, res) => {
-  const accessToken = req.body.accessToken
+// get current gas price
+app.post('/gasprice', (req, res) => {
   axios
-    .get('https://oauth.reddit.com/api/v1/me/karma', {
-      headers: {
-        Authorization: 'Bearer ' + accessToken,
-      },
-    })
+    .get(
+      'https://ethgasstation.info/api/ethgasAPI.json?api-key=' +
+        process.env.GAS_STATION_API_KEY
+    )
     .then((response) => {
-      res.json(response.data)
+      res.json((response.data.average / 10) * 1000000000)
     })
     .catch((e) => {
       res.status(500).json(e)
     })
 })
 
-app.post('/reddit-user', (req, res) => {
+// get users karma for the subreddit
+app.post('/karma', (req, res) => {
   const accessToken = req.body.accessToken
-  axios
-    .get('https://oauth.reddit.com/api/v1/me', {
-      headers: {
-        Authorization: 'Bearer ' + accessToken,
-      },
-    })
-    .then((response) => {
-      res.json(response.data)
+  getKarma(accessToken)
+    .then((karma) => {
+      res.json(karma)
     })
     .catch((e) => {
       res.status(500).json(e)
     })
 })
 
-app.post('/reddit-comments', (req, res) => {
+// get reddit user
+app.post('/user', (req, res) => {
   const accessToken = req.body.accessToken
-  getUserComments(accessToken)
-    .then((comments) => {
-      let commentBeforeDate
-      comments.forEach((comment) => {
-        if (
-          comment.data.subreddit === process.env.SUBREDDIT &&
-          comment.data.created_utc < process.env.LAUNCH_DATE
-        ) {
-          commentBeforeDate = comment
-        }
-      })
-      if (commentBeforeDate) {
-        res.json(true)
-      } else {
-        res.status(403).json('forbidden')
-      }
+  getUser(accessToken)
+    .then((user) => {
+      res.json(user)
+    })
+    .catch((e) => {
+      res.status(500).json(e)
+    })
+})
+
+// get reddit users subscription to the subreddit
+app.post('/subscription', (req, res) => {
+  const accessToken = req.body.accessToken
+  getSubscriptions(accessToken)
+    .then((subscriptions) => {
+      res.json(getSubscription(subscriptions))
+    })
+    .catch((e) => {
+      res.status(500).json(e)
+    })
+})
+
+// get reddit users subscription to the subreddit
+app.post('/interacted-before-launch', (req, res) => {
+  const accessToken = req.body.accessToken
+  getUser(accessToken)
+    .then((user) => {
+      Promise.all([
+        getComments(accessToken, user.name),
+        getUpvotes(accessToken, user.name),
+      ])
+        .then((values) => {
+          res.json(
+            getInteractedBeforeLaunch(
+              values[0],
+              values[1],
+              process.env.LAUNCH_DATE
+            )
+          )
+        })
+        .catch((e) => {
+          res.status(500).json(e)
+        })
     })
     .catch((e) => {
       res.status(500).json(e)
@@ -110,88 +134,89 @@ app.post('/confirm-claim', (req, res) => {
     .call()
     .then((claim) => {
       if (!claim.confirmed) {
-        axios
-          .get('https://oauth.reddit.com/api/v1/me', {
-            headers: {
-              Authorization: 'Bearer ' + accessToken,
-            },
-          })
-          .then((response) => {
-            const user = response.data
-            if (user.name === claim.redditUser) {
-              axios
-                .get('https://oauth.reddit.com/api/v1/me/karma', {
-                  headers: {
-                    Authorization: 'Bearer ' + accessToken,
-                  },
-                })
-                .then((response) => {
-                  let karma
-                  response.data.data.forEach((subreddit) => {
-                    if (subreddit.sr === process.env.SUBREDDIT) {
-                      karma = subreddit.comment_karma + subreddit.link_karma
-                    }
-                  })
-                  if (karma >= process.env.SMALL_KARMA) {
-                    let claimAmount = Number(process.env.SMALL_CLAIM)
-                    if (karma >= process.env.BIG_KARMA) {
-                      claimAmount = Number(process.env.BIG_CLAIM)
-                    }
-                    getUserComments(accessToken).then((comments) => {
-                      let commentBeforeDate
-                      comments.forEach((comment) => {
-                        if (
-                          comment.data.subreddit === process.env.SUBREDDIT &&
-                          comment.data.created_utc < process.env.LAUNCH_DATE
-                        ) {
-                          commentBeforeDate = comment
-                        }
-                      })
-                      if (commentBeforeDate) {
-                        fws.methods
-                          .claimConfirm(
-                            requestId,
-                            (claimAmount * Math.pow(10, 18)).toString()
-                          )
-                          .send({ from: process.env.ORACLE_ADDRESS })
-                          .then((tx) => {
-                            res.json(tx)
-                          })
-                          .catch((e) => {
-                            res.status(500).json(e)
-                          })
-                      } else {
-                        res
-                          .status(403)
-                          .json('Forbidden: User was created too recently.')
+        getUser(accessToken)
+          .then((user) => {
+            Promise.all([
+              getKarma(accessToken),
+              getComments(accessToken, user.name),
+              getUpvotes(accessToken, user.name),
+              getSubscriptions(accessToken),
+              fws.methods.totalSupply().call(),
+            ]).then((values) => {
+              const karma = values[0]
+              const comments = values[1]
+              const upvotes = values[2]
+              const subscriptions = values[3]
+              const totalSupply = values[4]
+              const hasInteractedBeforeLaunch = getInteractedBeforeLaunch(
+                comments,
+                upvotes,
+                process.env.LAUNCH_DATE
+              )
+              const subscription = getSubscription(subscriptions)
+              const isSubscriber = subscription.data.user_is_subscriber
+              const isMod = subscription.data.user_is_moderator
+              const isBanned = subscription.data.user_is_banned
+
+              if (user.name === claim.redditUser) {
+                if (
+                  user.created_utc < process.env.LAUNCH_DATE &&
+                  isSubscriber &&
+                  !isBanned
+                ) {
+                  if (
+                    totalSupply / Math.pow(10, 18) <
+                      process.env.TIER0_MAX_SUPPLY ||
+                    hasInteractedBeforeLaunch
+                  ) {
+                    let tier = 0
+                    if (karma >= process.env.SMALL_KARMA) {
+                      tier = 1
+                      if (karma >= process.env.BIG_KARMA) {
+                        tier = 2
                       }
-                    })
+                    }
+
+                    fws.methods
+                      .claimConfirm(requestId, tier, isMod)
+                      .send({ from: process.env.ORACLE_ADDRESS })
+                      .then((tx) => {
+                        res.json(tx)
+                      })
+                      .catch((e) => {
+                        res.status(500).json(e)
+                      })
                   } else {
-                    res.status(403).json('Forbidden: Not enough karma.')
+                    res
+                      .status(403)
+                      .json(
+                        'Forbidden: Tier0 supply exceeded or no prior interaction.'
+                      )
                   }
-                })
-                .catch((e) => {
-                  res.status(501).json(e)
-                })
-            } else {
-              res.status(403).json('Forbidden: Wrong user.')
-            }
+                } else {
+                  res
+                    .status(403)
+                    .json(
+                      'Forbidden: User was created too recently or is banned or not a subscriber.'
+                    )
+                }
+              } else {
+                res.status(403).json('Forbidden: Wrong user.')
+              }
+            })
           })
           .catch((e) => {
-            res.status(502).json(e)
+            res.status(500).json(e)
           })
       } else {
-        res.status(403).json('Forbidden: Already claimed.')
+        res.status(403).json('Forbidden: Claim already confirmed.')
       }
-    })
-    .catch((e) => {
-      res.status(503).json(e)
     })
 })
 
-const getUserComments = (accessToken, after, result = []) => {
+const getSubscriptions = (accessToken, after, result = []) => {
   return axios
-    .get('https://oauth.reddit.com/user/mktatreddit/comments?after=' + after, {
+    .get('https://oauth.reddit.com/subreddits/mine/subscriber?after=' + after, {
       headers: {
         Authorization: 'bearer ' + accessToken,
       },
@@ -199,10 +224,116 @@ const getUserComments = (accessToken, after, result = []) => {
     .then((res) => {
       result.push(...res.data.data.children)
       if (res.data.data.after) {
-        return getUserComments(accessToken, res.data.data.after, result)
+        return getSubscriptions(accessToken, res.data.data.after, result)
       } else {
         return result
       }
+    })
+    .catch((e) => console.log(e))
+}
+
+const getSubscription = (subscriptions) => {
+  let subscription
+  subscriptions.forEach((sub) => {
+    if (sub.data.display_name === process.env.SUBREDDIT) {
+      subscription = sub
+    }
+  })
+  return subscription
+}
+
+const getComments = (accessToken, username, after, result = []) => {
+  return axios
+    .get(
+      'https://oauth.reddit.com/user/' + username + '/comments?after=' + after,
+      {
+        headers: {
+          Authorization: 'bearer ' + accessToken,
+        },
+      }
+    )
+    .then((res) => {
+      result.push(...res.data.data.children)
+      if (res.data.data.after) {
+        return getComments(accessToken, username, res.data.data.after, result)
+      } else {
+        return result
+      }
+    })
+    .catch((e) => console.log(e))
+}
+
+const getUpvotes = (accessToken, username, after, result = []) => {
+  return axios
+    .get(
+      'https://oauth.reddit.com/user/' + username + '/upvoted?after=' + after,
+      {
+        headers: {
+          Authorization: 'bearer ' + accessToken,
+        },
+      }
+    )
+    .then((res) => {
+      result.push(...res.data.data.children)
+      if (res.data.data.after) {
+        return getUpvotes(accessToken, username, res.data.data.after, result)
+      } else {
+        return result
+      }
+    })
+    .catch((e) => console.log(e))
+}
+
+const getInteractedBeforeLaunch = (comments, upvotes, timestamp) => {
+  let interactedBeforeDate
+  comments.forEach((comment) => {
+    if (
+      comment.data.subreddit === process.env.SUBREDDIT &&
+      comment.data.created_utc < process.env.LAUNCH_DATE
+    ) {
+      interactedBeforeDate = comment
+    }
+  })
+  upvotes.forEach((upvote) => {
+    if (
+      upvote.data.subreddit === process.env.SUBREDDIT &&
+      upvote.data.created_utc < process.env.LAUNCH_DATE
+    ) {
+      interactedBeforeDate = upvote
+    }
+  })
+
+  return !!interactedBeforeDate
+}
+
+const getKarma = (accessToken) => {
+  return axios
+    .get('https://oauth.reddit.com/api/v1/me/karma', {
+      headers: {
+        Authorization: 'Bearer ' + accessToken,
+      },
+    })
+    .then((response) => {
+      let karma = 0
+      response.data.data.forEach((subreddit) => {
+        if (subreddit.sr === process.env.SUBREDDIT) {
+          karma = subreddit.comment_karma + subreddit.link_karma
+        }
+      })
+      return karma
+    })
+    .catch((e) => console.log(e))
+}
+
+const getUser = (accessToken) => {
+  return axios
+    .get('https://oauth.reddit.com/api/v1/me', {
+      headers: {
+        Authorization: 'Bearer ' + accessToken,
+      },
+    })
+    .then((response) => {
+      return response.data
     })
     .catch((e) => console.log(e))
 }
