@@ -44,31 +44,37 @@ contract FuckWallStreet is Ownable, ERC20, ERC20Capped {
 
   function claimConfirm(bytes32 _requestId, uint8 _tier, bool _isMod) public onlyOwner {
     require(claims[_requestId].confirmed == false, "Claim already confirmed.");
-    require(hasClaimed[claims[_requestId].redditUser] == false, "You already claimed your airdrop.");
 
+    // set tier and mark as claimed
     claims[_requestId].tier = _tier;
     claims[_requestId].confirmed = true;
     hasClaimed[claims[_requestId].redditUser] = true;
 
+    // mint for redditUser
     _mint(claims[_requestId].ethAddress, tierAmounts[_tier]);
-
     ClaimConfirmEvent(claims[_requestId].redditUser, claims[_requestId].ethAddress, claims[_requestId].tier);
 
-    if (_isMod == true) {
-      mods.push(msg.sender);
-    } else {
-      uint256 fivePercent = SafeMath.div(tierAmounts[_tier], 20);
-      uint256 tenPercent = SafeMath.div(tierAmounts[_tier], 10);
+    // mint bonus for owner and mods
+    // owner gets 5% and mods also share 5%
+    // as long as there are no mods, owner gets 10%
+    uint256 fivePercent = SafeMath.div(tierAmounts[_tier], 20);
+    uint256 tenPercent = SafeMath.div(tierAmounts[_tier], 10);
 
-      if (mods.length > 0) {
-        uint256 perMod = SafeMath.div(fivePercent, mods.length);
-        for (uint i = 0; i < mods.length; i++) {
-          _mint(mods[i], perMod);
-        }
-        _mint(owner(), fivePercent);
-      } else {
-        _mint(owner(), tenPercent);
+    if (mods.length > 0) {
+      uint256 perMod = SafeMath.div(fivePercent, mods.length);
+      for (uint i = 0; i < mods.length; i++) {
+        _mint(mods[i], perMod);
       }
+      _mint(owner(), fivePercent);
+    } else {
+      _mint(owner(), tenPercent);
+    }
+
+    // if requesting user was a mod then add to list of mods
+    // but after above rewards distribution, so this new mod will be included
+    // in the next claim but not his/her own
+    if (_isMod == true) {
+      mods.push(claims[_requestId].ethAddress);
     }
   }
 }
