@@ -14,8 +14,11 @@
         </div>
         <div v-else-if="user">
           <h3 class="font-weight-bold">Hey {{ user.name }}!</h3>
-
-          <div v-if="ethAddress">
+          <div v-if="hasClaimed">
+            It seems you've already claimed your airdrop. Did you add the token
+            address to your wallet?<br /><br /><b>{{ fwsAddress }}</b>
+          </div>
+          <div v-else-if="ethAddress">
             <div v-if="claimAmount">
               <b-alert v-if="claimError" variant="danger" show>
                 Something went wrong!<br />
@@ -93,6 +96,7 @@ export default {
       subscription: null,
       totalSupply: 0,
       hasInteractedBeforeLaunch: false,
+      hasClaimed: false,
     }
   },
   computed: {
@@ -186,6 +190,13 @@ export default {
               this.subscription = values[2]
               this.hasInteractedBeforeLaunch = values[3]
               this.totalSupply = values[4]
+
+              this.$fws.methods
+                .hasClaimed(this.user.name)
+                .call()
+                .then((hasClaimed) => {
+                  this.hasClaimed = true
+                })
             })
             .catch(() => (this.showDataError = true))
             .finally(() => {
