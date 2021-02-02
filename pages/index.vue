@@ -2,40 +2,58 @@
   <div
     class="container py-5 d-flex flex-column justify-content-center align-items-center"
   >
-    <img src="header.png" />
-    <h5 class="mb-4 text-center"></h5>
+    <img src="header.png" style="max-width: 95%" />
+    <h5 class="mb-5 text-center"></h5>
     <div class="bg-brand px-5 py-4 text-center">
       <div v-if="isEthereumBrowser">
-        <b-alert v-if="error" variant="danger" show>Error: {{ error }}</b-alert>
-        <div v-if="loading">loading...</div>
-        <a
-          v-if="!loading && !accessToken"
-          :href="loginUrl"
-          class="btn btn-brand btn-lg"
-          >Connect Reddit Account</a
-        >
-        <div v-if="accessToken && user && karma">
-          <h5>Hey {{ user.name }}!</h5>
-          <button
-            v-if="ethAddress"
-            class="btn btn-brand btn-lg"
-            @click="claim()"
-          >
-            Claim Tokens
-          </button>
+        <b-alert v-if="showDataError" variant="danger" show>
+          Error: Something went wrong when analyzing your reddit account.
+        </b-alert>
+        <div v-if="loading">
+          Ok, let's see if you can claim something. One second please...
+        </div>
+        <div v-else-if="user">
+          <h3 class="font-weight-bold">Hey {{ user.name }}!</h3>
+
+          <div v-if="ethAddress">
+            <div v-if="claimAmount">
+              <div v-if="showClaimSuccess">
+                Perfect! Look into your wallet now. You should have
+                {{ claimAmount }} FWS now.<br />
+                If you haven't added the token to your wallet yet, here's the
+                address:<br /><b>{{ fwsAddress }}</b>
+              </div>
+              <div v-else>
+                Great! You can claim {{ claimAmount }} fun coupons.
+                <button class="btn btn-brand btn-lg" @click="claim()">
+                  Ok, cool. Now give it to me!
+                </button>
+                <div v-if="isMod">
+                  Oh and by the way... Each time a user claims tokens, a 5% bonus will be automatically distributed to all moderators, who already claimed theirs. ;)
+                </div>
+              </div>
+            </div>
+            <div v-else class="pt-3">
+              Too bad. You are not eligable to claim anything. :(<br />
+              Your account is either too new or you weren't involved enough.
+            </div>
+          </div>
           <button v-else class="btn btn-brand btn-lg" @click="connect()">
             Connect Wallet
           </button>
         </div>
+        <a v-else :href="loginUrl" class="btn btn-brand btn-lg">
+          Ok, how much to I get?
+        </a>
       </div>
-      <div v-else>
-        <a
-          href="https://metamask.io"
-          target="_blank"
-          class="btn btn-brand btn-lg"
-          >Install MetaMask</a
-        >
-      </div>
+      <a
+        v-else
+        href="https://metamask.io"
+        target="_blank"
+        class="btn btn-brand btn-lg"
+      >
+        Install MetaMask
+      </a>
     </div>
   </div>
 </template>
@@ -46,16 +64,68 @@ export default {
     return {
       loginUrl: `https://www.reddit.com/api/v1/authorize.compact?client_id=${process.env.REDDIT_CLIENT_ID}&response_type=code&state=random&redirect_uri=${process.env.REDIRECT_URL}&duration=temporary&scope=mysubreddits,identity,history`,
       accessToken: null,
-      error: null,
+      showClaimSuccess: false,
+      showClaimError: false,
+      showDataError: false,
       loading: false,
+      ethAddress: null,
       user: null,
       karma: 0,
-      ethAddress: null,
+      subscription: null,
+      totalSupply: 0,
+      hasInteractedBeforeLaunch: false,
     }
   },
   computed: {
+    fwsAddress() {
+      return process.env.FWS_ADDRESS
+    },
     isEthereumBrowser() {
       return typeof window !== 'undefined' && window.ethereum
+    },
+    isMod() {
+      if (this.subscription && this.subscription.data.user_is_moderator) {
+        return true
+      }
+      return false
+    },
+    isSubscriber() {
+      if (this.subscription && this.subscription.data.user_is_subscriber) {
+        return true
+      }
+      return false
+    },
+    isBanned() {
+      if (this.subscription && this.subscription.data.user_is_banned) {
+        return true
+      }
+      return false
+    },
+    isNew() {
+      if (this.user && this.user.created_utc > process.env.LAUNCH_DATE) {
+        return true
+      }
+      return false
+    },
+    claimAmount() {
+      let claimAmount = 0
+
+      if (
+        this.totalSupply / Math.pow(10, 18) < process.env.TIER0_MAX_SUPPLY ||
+        this.hasInteractedBeforeLaunch
+      ) {
+        if (this.isSubscriber && !this.isNew) {
+          claimAmount = process.env.TIER0_CLAIM_AMOUNT
+          if (this.karma > process.env.SMALL_KARMA) {
+            claimAmount = process.env.TIER1_CLAIM_AMOUNT
+            if (this.karma > process.env.BIG_KARMA) {
+              claimAmount = process.env.TIER2_CLAIM_AMOUNT
+            }
+          }
+        }
+      }
+
+      return claimAmount
     },
   },
   mounted() {
@@ -66,37 +136,46 @@ export default {
     if (code && !error) {
       this.loading = true
       this.$axios
-        .$post(process.env.API_URL + '/reddit-access-token', {
+        .$post(process.env.API_URL + '/access-token', {
           code,
         })
-        .then((response) => {
-          if (response.access_token) {
-            this.accessToken = response.access_token
-            this.$router.push('/')
-            this.$axios
-              .$post(process.env.API_URL + '/reddit-user', {
+        .then((accessToken) => {
+          this.accessToken = accessToken
+          this.$router.push('/')
+
+          Promise.all([
+            this.$axios.$post(process.env.API_URL + '/user', {
+              accessToken: this.accessToken,
+            }),
+            this.$axios.$post(process.env.API_URL + '/karma', {
+              accessToken: this.accessToken,
+            }),
+            this.$axios.$post(process.env.API_URL + '/subscription', {
+              accessToken: this.accessToken,
+            }),
+            this.$axios.$post(
+              process.env.API_URL + '/interacted-before-launch',
+              {
                 accessToken: this.accessToken,
-              })
-              .then((response) => {
-                this.user = response
-                this.$axios
-                  .$post(process.env.API_URL + '/reddit-karma', {
-                    accessToken: this.accessToken,
-                  })
-                  .then((response) => {
-                    response.data.forEach((subreddit) => {
-                      if (subreddit.sr === 'finance') {
-                        this.karma =
-                          subreddit.comment_karma + subreddit.link_karma
-                      }
-                    })
-                  })
-              })
-          } else {
-            this.error = response.error
-          }
+              }
+            ),
+            this.$fws.methods.totalSupply().call(),
+          ])
+            .then((values) => {
+              this.user = values[0]
+              this.karma = values[1]
+              this.subscription = values[2]
+              this.hasInteractedBeforeLaunch = values[3]
+              this.totalSupply = values[4]
+            })
+            .catch(() => (this.showDataError = true))
+            .finally(() => {
+              setTimeout(() => {
+                this.loading = false
+              }, 3000)
+            })
         })
-        .finally(() => (this.loading = false))
+        .catch(() => (this.loading = false))
     }
   },
   methods: {
@@ -115,7 +194,7 @@ export default {
               .claimRequest(this.user.name)
               .send({
                 from: this.ethAddress,
-                value: gasPrice * process.env.CONFIRM_GAS,
+                value: gasPrice * process.env.CONFIRM_GAS * 1.1,
               })
               .then((tx) => {
                 this.$axios
@@ -125,8 +204,9 @@ export default {
                       tx.events.ClaimRequestEvent.returnValues.requestId,
                   })
                   .then((tx) => {
-                    console.log(tx)
+                    this.showClaimSuccess = true
                   })
+                  .catch(() => (this.showClaimError = true))
               })
           }
         })
