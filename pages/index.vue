@@ -135,7 +135,7 @@ export default {
       let claimAmount = 0
 
       if (
-        this.totalSupply / Math.pow(10, 18) < process.env.TIER0_MAX_SUPPLY ||
+        BigInt(this.totalSupply) < BigInt(process.env.TIER0_MAX_SUPPLY) ||
         this.hasInteractedBeforeLaunch
       ) {
         if (this.isSubscriber && !this.isNew) {

@@ -167,8 +167,8 @@ app.post('/confirm-claim', (req, res) => {
                   !isBanned
                 ) {
                   if (
-                    totalSupply / Math.pow(10, 18) <
-                      process.env.TIER0_MAX_SUPPLY ||
+                    BigInt(totalSupply) <
+                      BigInt(process.env.TIER0_MAX_SUPPLY) ||
                     hasInteractedBeforeLaunch
                   ) {
                     let tier = 0

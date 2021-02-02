@@ -59,7 +59,7 @@ export default {
           'SUBREDDIT',
           'SMALL_KARMA',
           'BIG_KARMA',
-          'TIER0_SUPPLY',
+          'TIER0_MAX_SUPPLY',
           'TIER0_CLAIM_AMOUNT',
           'TIER1_CLAIM_AMOUNT',
           'TIER2_CLAIM_AMOUNT',
