@@ -16,7 +16,8 @@
           <h3 class="font-weight-bold">Hey {{ user.name }}!</h3>
           <div v-if="hasClaimed">
             It seems you've already claimed your airdrop. Did you add the token
-            address to your wallet?<br /><br /><b>{{ fwsAddress }}</b>
+            address to your wallet, so you can see your funds?<br /><br />
+            <b>{{ fwsAddress }}</b>
           </div>
           <div v-else-if="ethAddress">
             <div v-if="claimAmount">
