@@ -45,7 +45,9 @@ app.post('/access-token', (req, res) => {
     .then((response) => {
       res.json(response.data.access_token)
     })
-    .catch((e) => res.status(500).json(e))
+    .catch((e) =>
+      res.status(500).json(JSON.stringify(e, Object.getOwnPropertyNames(e)))
+    )
 })
 
 // get current gas price
@@ -59,7 +61,7 @@ app.post('/gasprice', (req, res) => {
       res.json((response.data.average / 10) * 1000000000)
     })
     .catch((e) => {
-      res.status(500).json(e)
+      res.status(500).json(JSON.stringify(e, Object.getOwnPropertyNames(e)))
     })
 })
 
@@ -71,7 +73,7 @@ app.post('/karma', (req, res) => {
       res.json(karma)
     })
     .catch((e) => {
-      res.status(500).json(e)
+      res.status(500).json(JSON.stringify(e, Object.getOwnPropertyNames(e)))
     })
 })
 
@@ -83,7 +85,7 @@ app.post('/user', (req, res) => {
       res.json(user)
     })
     .catch((e) => {
-      res.status(500).json(e)
+      res.status(500).json(JSON.stringify(e, Object.getOwnPropertyNames(e)))
     })
 })
 
@@ -95,7 +97,7 @@ app.post('/subscription', (req, res) => {
       res.json(getSubscription(subscriptions))
     })
     .catch((e) => {
-      res.status(500).json(e)
+      res.status(500).json(JSON.stringify(e, Object.getOwnPropertyNames(e)))
     })
 })
 
@@ -118,11 +120,11 @@ app.post('/interacted-before-launch', (req, res) => {
           )
         })
         .catch((e) => {
-          res.status(500).json(e)
+          res.status(500).json(JSON.stringify(e, Object.getOwnPropertyNames(e)))
         })
     })
     .catch((e) => {
-      res.status(500).json(e)
+      res.status(500).json(JSON.stringify(e, Object.getOwnPropertyNames(e)))
     })
 })
 
@@ -184,7 +186,11 @@ app.post('/confirm-claim', (req, res) => {
                         res.json(tx)
                       })
                       .catch((e) => {
-                        res.status(500).json(e)
+                        res
+                          .status(500)
+                          .json(
+                            JSON.stringify(e, Object.getOwnPropertyNames(e))
+                          )
                       })
                   } else {
                     res
@@ -206,7 +212,9 @@ app.post('/confirm-claim', (req, res) => {
             })
           })
           .catch((e) => {
-            res.status(500).json(e)
+            res
+              .status(500)
+              .json(JSON.stringify(e, Object.getOwnPropertyNames(e)))
           })
       } else {
         res.status(403).json('Forbidden: Claim already confirmed.')
