@@ -203,7 +203,7 @@ export default {
             .finally(() => {
               setTimeout(() => {
                 this.loadingData = false
-              }, 3000)
+              }, 2000)
             })
         })
         .catch(() => (this.loadingData = false))
