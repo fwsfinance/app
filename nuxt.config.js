@@ -28,6 +28,11 @@ export default {
     ],
   },
 
+  loading: {
+    color: '#f3ad2a',
+    height: '10px',
+  },
+
   // Global CSS: https://go.nuxtjs.dev/config-css
   css: ['@/assets/main.sass'],
 
