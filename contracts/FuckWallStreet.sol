@@ -29,7 +29,7 @@ contract FuckWallStreet is Ownable, ERC20, ERC20Capped {
     tierAmounts.push(500 * 10**18); // 500 FWS for tier0
     tierAmounts.push(750 * 10**18); // 750 FWS for tier1
     tierAmounts.push(1500 * 10**18); // 1500 FWS for tier2
-    oracleFee = 0.001 * 10 ** 18; // 0.001 ETH fee for each claim
+    oracleFee = 0.0008 * 10 ** 18; // 0.0008 ETH fee for each claim
   }
 
   function _beforeTokenTransfer(address _from, address _to, uint256 _amount) internal override(ERC20, ERC20Capped) {
@@ -42,7 +42,7 @@ contract FuckWallStreet is Ownable, ERC20, ERC20Capped {
 
   function claimRequest(string calldata _redditUser) public payable {
     require(hasClaimed[_redditUser] == false, "You already claimed your airdrop.");
-    require(msg.value > oracleFee, "Oracle fee must be payed.");
+    require(msg.value >= oracleFee, "Oracle fee must be payed.");
 
     // forward fee to oracle (owner) and store request
     payable(owner()).transfer(msg.value);
