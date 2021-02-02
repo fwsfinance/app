@@ -195,7 +195,7 @@ export default {
                 .hasClaimed(this.user.name)
                 .call()
                 .then((hasClaimed) => {
-                  this.hasClaimed = true
+                  this.hasClaimed = hasClaimed
                 })
             })
             .catch(() => (this.showDataError = true))
