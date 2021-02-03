@@ -66,7 +66,14 @@ export default {
         ],
       },
     ],
+    '@nuxtjs/fontawesome',
   ],
+
+  fontawesome: {
+    icons: {
+      brand: ['faGithub', 'faTwitter'],
+    },
+  },
 
   env: {
     FWS_ABI: JSON.parse(fs.readFileSync('./FuckWallStreet.json').toString())
