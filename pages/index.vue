@@ -81,6 +81,17 @@
         Install MetaMask
       </a>
     </div>
+    <footer class="my-5">
+      <small class="text-muted d-block mb-3">
+        Current Supply: {{ $web3.utils.fromWei(totalSupply.toString(), 'ether') }}
+      </small>
+      <a href="https://github.com/fwsfinance" target="_blank" class="mx-2">
+        <font-awesome-icon :icon="['fab', 'github']" class="fa-2x" />
+      </a>
+      <a href="https://github.com/fwsfinance" target="_blank" class="mx-2">
+        <font-awesome-icon :icon="['fab', 'twitter']" class="fa-2x" />
+      </a>
+    </footer>
   </div>
 </template>
 

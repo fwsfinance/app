@@ -71,7 +71,7 @@ export default {
 
   fontawesome: {
     icons: {
-      brand: ['faGithub', 'faTwitter'],
+      brands: ['faGithub', 'faTwitter'],
     },
   },
 
