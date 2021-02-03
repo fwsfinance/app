@@ -56,10 +56,7 @@
                     as we call them.
                   </b>
                 </div>
-                <div>
-                  (Current Supply:
-                  {{ $web3.utils.fromWei(totalSupply, 'ether') }})
-                </div>
+                <div>(Current Supply: {{ totalSupplyFormatted }})</div>
                 <button
                   class="btn btn-brand btn-lg mt-3"
                   :disabled="requestingClaim || confirmingClaim"
@@ -191,6 +188,11 @@ export default {
       }
 
       return claimAmount
+    },
+    totalSupplyFormatted() {
+      return new Intl.NumberFormat().format(
+        this.$web3.utils.fromWei(this.totalSupply, 'ether')
+      )
     },
   },
   mounted() {
