@@ -18,7 +18,11 @@
         </div>
         <div v-else-if="loadingData">
           Ok, let's see if you can claim something. One second please...<br />
-          <font-awesome-icon :icon="['fas', 'circle-notch']" spin class="mt-3" />
+          <font-awesome-icon
+            :icon="['fas', 'circle-notch']"
+            spin
+            class="mt-3"
+          />
         </div>
         <div v-else-if="user">
           <h3 class="font-weight-bold">Hey {{ user.name }}!</h3>
