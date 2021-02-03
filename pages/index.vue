@@ -19,6 +19,11 @@
             address to your wallet, so you can see your funds?<br /><br />
             <b>{{ fwsAddress }}</b>
           </div>
+          <div v-else-if="isNew">
+            Sorry! It seems you're account was created just recently.
+            Unfortunately we can't issue tokens for accounts created after this
+            project launched.
+          </div>
           <div v-else-if="ethAddress">
             <div v-if="claimAmount">
               <b-alert v-if="claimError" variant="danger" show>
