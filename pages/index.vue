@@ -6,10 +6,17 @@
     <h5 class="mb-5 text-center"></h5>
     <div class="bg-brand px-5 py-4 text-center">
       <div v-if="isEthereumBrowser">
-        <b-alert v-if="showDataError" variant="danger" show>
-          Error: Something went wrong when analyzing your reddit account.
-        </b-alert>
-        <div v-if="loadingData">
+        <div v-if="showDataError">
+          <div class="mb-3">
+            Something went wrong when fetching the data we need. :(
+            <div v-if="wrongChain">
+              Please connect your Metamask wallet with the Ethereum mainnet and
+              then try again.
+            </div>
+          </div>
+          <a :href="loginUrl" class="btn btn-brand btn-lg">Try again</a>
+        </div>
+        <div v-else-if="loadingData">
           Ok, let's see if you can claim something. One second please...
         </div>
         <div v-else-if="user">
@@ -26,10 +33,11 @@
           </div>
           <div v-else-if="ethAddress">
             <div v-if="claimAmount">
-              <b-alert v-if="claimError" variant="danger" show>
-                Something went wrong!<br />
-                {{ claimError }}
-              </b-alert>
+              <div v-if="claimError" class="mb-2">
+                Shhoooot! Something went wrong that really should not!<br />
+                {{ claimError }}<br />
+                We are sorry. :'(
+              </div>
               <div v-if="showClaimSuccess">
                 <br />Perfect! You have {{ claimAmount }} FWS now.<br />If you
                 haven't done so yet, learn
@@ -42,7 +50,16 @@
                 Token Address:<br /><b>{{ fwsAddress }}</b>
               </div>
               <div v-else>
-                <div>Great! You can claim {{ claimAmount }} fun coupons.</div>
+                <div>
+                  <b>
+                    Great! You can claim {{ claimAmount }} FWS, or "fun coupons"
+                    as we call them.
+                  </b>
+                </div>
+                <div>
+                  (Current Supply:
+                  {{ $web3.utils.fromWei(totalSupply, 'ether') }})
+                </div>
                 <button
                   class="btn btn-brand btn-lg mt-3"
                   :disabled="requestingClaim || confirmingClaim"
@@ -55,9 +72,11 @@
                   <span v-else>Ok, cool. Now give it to me!</span>
                 </button>
                 <div v-if="isMod" class="mt-3">
-                  Oh and by the way... Each time a user claims tokens, a 5%
-                  bonus will be automatically distributed to all moderators, who
-                  already claimed theirs. ;)
+                  By the way... Looks like you are a moderator. Each time a user
+                  claims tokens, 5% of them are disctributed to the moderators.
+                  But only those who already claimed their own airdrop. So just
+                  claim your tokens now and watch your balance grow even more
+                  over time.
                 </div>
               </div>
             </div>
@@ -87,10 +106,6 @@
       </a>
     </div>
     <footer class="my-5">
-      <small class="text-muted d-block mb-3">
-        Current Supply:
-        {{ $web3.utils.fromWei(totalSupply.toString(), 'ether') }}
-      </small>
       <a href="https://github.com/fwsfinance" target="_blank" class="mx-2">
         <font-awesome-icon :icon="['fab', 'github']" class="fa-2x" />
       </a>
@@ -107,13 +122,14 @@ export default {
     return {
       loginUrl: `https://www.reddit.com/api/v1/authorize.compact?client_id=${process.env.REDDIT_CLIENT_ID}&response_type=code&state=random&redirect_uri=${process.env.REDIRECT_URL}&duration=temporary&scope=mysubreddits,identity,history`,
       accessToken: null,
+      ethAddress: null,
+      ethChainID: null,
       showClaimSuccess: false,
       claimError: false,
       showDataError: false,
       loadingData: false,
       requestingClaim: false,
       confirmingClaim: false,
-      ethAddress: null,
       user: null,
       karma: 0,
       subscription: null,
@@ -128,6 +144,9 @@ export default {
     },
     isEthereumBrowser() {
       return typeof window !== 'undefined' && window.ethereum
+    },
+    wrongChain() {
+      return this.ethChainID !== process.env.ETH_CHAIN_ID
     },
     isMod() {
       if (this.subscription && this.subscription.data.user_is_moderator) {
@@ -176,6 +195,7 @@ export default {
   },
   mounted() {
     this.connect()
+    this.listenForAccountORChainChange()
     const urlParams = new URLSearchParams(window.location.search)
     const error = urlParams.get('error')
     const code = urlParams.get('code')
@@ -221,7 +241,9 @@ export default {
                   this.hasClaimed = hasClaimed
                 })
             })
-            .catch(() => (this.showDataError = true))
+            .catch(() => {
+              this.showDataError = true
+            })
             .finally(() => {
               setTimeout(() => {
                 this.loadingData = false
@@ -235,6 +257,18 @@ export default {
     connect() {
       this.$web3.eth.requestAccounts().then((accounts) => {
         this.ethAddress = accounts[0]
+      })
+      this.$web3.eth.getChainId().then((id) => {
+        this.ethChainID = id
+      })
+    },
+    listenForAccountORChainChange() {
+      window.ethereum.on('accountsChanged', () => {
+        this.connect()
+      })
+
+      window.ethereum.on('chainChanged', () => {
+        this.connect()
       })
     },
     claim() {
