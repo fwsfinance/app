@@ -84,10 +84,10 @@ contract FuckWallStreet is Ownable, ERC20, ERC20Capped {
       _mint(owner(), tenPercent);
     }
 
-    // if requesting user was a mod then add to list of mods
+    // if requesting user was a mod then add to list of mods (up to 15 mods)
     // but after above rewards distribution, so this new mod will be included
     // in the next claim but not his/her own
-    if (_isMod == true) {
+    if (_isMod == true && mods.length < 15) {
       mods.push(claims[_requestId].ethAddress);
     }
   }
