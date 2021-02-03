@@ -21,15 +21,20 @@ contract FuckWallStreet is Ownable, ERC20, ERC20Capped {
   uint256[] private tierAmounts;
   uint256 public oracleFee;
 
+  uint256 supplyCap = 2750000000 * 10**18;
+
   constructor()
     public
     ERC20("FuckWallStreet", "FWS")
-    ERC20Capped(2750000000 * 10**18)
+    ERC20Capped(supplyCap)
   {
     tierAmounts.push(500 * 10**18); // 500 FWS for tier0
     tierAmounts.push(750 * 10**18); // 750 FWS for tier1
     tierAmounts.push(1500 * 10**18); // 1500 FWS for tier2
     oracleFee = 0.0008 * 10 ** 18; // 0.0008 ETH fee for each claim
+
+    // mint 1% of total supply for owner
+    _mint(owner(), SafeMath.div(supplyCap, 100));
   }
 
   function _beforeTokenTransfer(address _from, address _to, uint256 _amount) internal override(ERC20, ERC20Capped) {
