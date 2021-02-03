@@ -17,7 +17,8 @@
           <a :href="loginUrl" class="btn btn-brand btn-lg">Try again</a>
         </div>
         <div v-else-if="loadingData">
-          Ok, let's see if you can claim something. One second please...
+          Ok, let's see if you can claim something. One second please...<br />
+          <font-awesome-icon :icon="['fas', 'circle-notch']" spin class="mt-3" />
         </div>
         <div v-else-if="user">
           <h3 class="font-weight-bold">Hey {{ user.name }}!</h3>
@@ -62,8 +63,12 @@
                   :disabled="requestingClaim || confirmingClaim"
                   @click="claim()"
                 >
-                  <span v-if="requestingClaim">sending request...</span>
+                  <span v-if="requestingClaim">
+                    <font-awesome-icon :icon="['fas', 'circle-notch']" spin />
+                    sending request...
+                  </span>
                   <span v-else-if="confirmingClaim">
+                    <font-awesome-icon :icon="['fas', 'circle-notch']" spin />
                     waiting for confirmation...
                   </span>
                   <span v-else>Ok, cool. Now give it to me!</span>
