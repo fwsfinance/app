@@ -99,7 +99,7 @@
           </button>
         </div>
         <a v-else :href="loginUrl" class="btn btn-brand btn-lg">
-          Ok, how much to I get?
+          Ok, how much do I get?
         </a>
       </div>
       <a
