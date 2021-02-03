@@ -26,10 +26,15 @@
                 {{ claimError }}
               </b-alert>
               <div v-if="showClaimSuccess">
-                Perfect! Look into your wallet now. You should have
-                {{ claimAmount }} FWS now.<br />
-                If you haven't added the token to your wallet yet, here's the
-                address:<br /><b>{{ fwsAddress }}</b>
+                <br />Perfect! You have {{ claimAmount }} FWS now.<br />If you
+                haven't done so yet, learn
+                <a
+                  href="https://metamask.zendesk.com/hc/en-us/articles/360015489031-How-to-View-See-Your-Tokens-and-Custom-Tokens-in-Metamask"
+                  >here</a
+                >
+                how to add a new token's balance to your Metamask wallet.<br />
+                <br />
+                Token Address:<br /><b>{{ fwsAddress }}</b>
               </div>
               <div v-else>
                 <div>Great! You can claim {{ claimAmount }} fun coupons.</div>
