@@ -69,11 +69,11 @@
                   <span v-else>Ok, cool. Now give it to me!</span>
                 </button>
                 <div v-if="isMod" class="mt-3">
-                  By the way... Looks like you are a moderator. Each time a user
-                  claims tokens, 5% of them are disctributed to the moderators.
-                  But only those who already claimed their own airdrop. So just
-                  claim your tokens now and watch your balance grow even more
-                  over time.
+                  By the way... Looks like you are a <b>moderator</b>. Each time
+                  a user claims tokens, 5% of them are distributed to the
+                  moderators. But only those who already claimed their own
+                  airdrop. So just claim your tokens now and watch your balance
+                  grow even more over time.
                 </div>
               </div>
             </div>
