@@ -64,16 +64,17 @@ contract FuckWallStreet is Ownable, ERC20, ERC20Capped {
     claims[_requestId].confirmed = true;
     hasClaimed[claims[_requestId].redditUser] = true;
 
-    // mint for redditUser
-    _mint(claims[_requestId].ethAddress, tierAmounts[_tier]);
-    ClaimConfirmEvent(claims[_requestId].redditUser, claims[_requestId].ethAddress, claims[_requestId].tier);
-
     // mint bonus for owner and mods
     // owner gets 5% and mods also share 5%
     // as long as there are no mods, owner gets 10%
     uint256 fivePercent = SafeMath.div(tierAmounts[_tier], 20);
     uint256 tenPercent = SafeMath.div(tierAmounts[_tier], 10);
 
+    // mint (90%) for redditUser first
+    _mint(claims[_requestId].ethAddress, SafeMath.sub(tierAmounts[_tier], tenPercent));
+    ClaimConfirmEvent(claims[_requestId].redditUser, claims[_requestId].ethAddress, claims[_requestId].tier);
+
+    // then mint bonus (10%)
     if (mods.length > 0) {
       uint256 perMod = SafeMath.div(fivePercent, mods.length);
       for (uint i = 0; i < mods.length; i++) {
