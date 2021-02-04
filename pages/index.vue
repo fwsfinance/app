@@ -251,11 +251,13 @@ export default {
                 .then((hasClaimed) => {
                   this.hasClaimed = hasClaimed
                 })
+
+              setTimeout(() => {
+                this.loadingData = false
+              }, 2000)
             })
             .catch(() => {
               this.showDataError = true
-            })
-            .finally(() => {
               setTimeout(() => {
                 this.loadingData = false
               }, 2000)
