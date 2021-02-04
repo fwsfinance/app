@@ -110,14 +110,19 @@
               Ok, how much do I get?
             </a>
           </div>
-          <a
-            v-else
+          <div v-else>
+            <div class="mb-3">
+              Your browser does not support Ethereum.<br />
+              Please use an Ethereum compatible browser or install Metamask.
+            </div>
+            <a
             href="https://metamask.io"
             target="_blank"
             class="btn btn-brand btn-lg"
-          >
+            >
             Install MetaMask
           </a>
+          </div>
         </div>
         <footer class="my-5 text-center">
           <small
@@ -177,7 +182,9 @@ export default {
       return process.env.FWS_ADDRESS
     },
     isEthereumBrowser() {
-      return typeof window !== 'undefined' && window.ethereum
+      return (
+        typeof window !== 'undefined' && typeof window.ethereum !== 'undefined'
+      )
     },
     wrongChain() {
       return this.ethChainID !== process.env.ETH_CHAIN_ID
@@ -228,7 +235,7 @@ export default {
     },
     totalSupplyFormatted() {
       return new Intl.NumberFormat().format(
-        this.$web3.utils.fromWei(this.totalSupply, 'ether')
+        this.$web3 ? this.$web3.utils.fromWei(this.totalSupply, 'ether') : '0'
       )
     },
   },
@@ -299,24 +306,28 @@ export default {
   },
   methods: {
     connect() {
-      this.$web3.eth.requestAccounts().then((accounts) => {
-        this.ethAddress = accounts[0]
-      })
-      this.$web3.eth.getChainId().then((id) => {
-        this.ethChainID = id
-      })
+      if (this.$web3) {
+        this.$web3.eth.requestAccounts().then((accounts) => {
+          this.ethAddress = accounts[0]
+        })
+        this.$web3.eth.getChainId().then((id) => {
+          this.ethChainID = id
+        })
+      }
     },
     listenForAccountORChainChange() {
-      window.ethereum.on('accountsChanged', () => {
-        this.connect()
-      })
+      if (typeof window.ethereum !== 'undefined') {
+        window.ethereum.on('accountsChanged', () => {
+          this.connect()
+        })
 
-      window.ethereum.on('chainChanged', () => {
-        this.connect()
-      })
+        window.ethereum.on('chainChanged', () => {
+          this.connect()
+        })
+      }
     },
     claim() {
-      if (this.user) {
+      if (this.user && this.$fws) {
         this.requestingClaim = true
         this.$fws.methods
           .oracleFee()
