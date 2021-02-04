@@ -116,12 +116,12 @@
               Please use an Ethereum compatible browser or install Metamask.
             </div>
             <a
-            href="https://metamask.io"
-            target="_blank"
-            class="btn btn-brand btn-lg"
+              href="https://metamask.io"
+              target="_blank"
+              class="btn btn-brand btn-lg"
             >
-            Install MetaMask
-          </a>
+              Install MetaMask
+            </a>
           </div>
         </div>
         <footer class="my-5 text-center">
