@@ -11,7 +11,7 @@ a:not(.btn)
     color: darken(#f3ad2a, 35)
 
 .bg-brand
-  background-color: #f3ad2a
+  background-color: lighten(#f3ad2a, 20)
 
 .btn-brand
   background-color: darken(#f3ad2a, 10)
@@ -22,9 +22,18 @@ a:not(.btn)
   background-size: contain
   background-position: center center
   background-repeat: no-repeat
-  font-size: 1.25rem
+  font-size: 1.20rem
   font-weight: bold
   width: 500px
   height: 450px
-  padding: 280px 40px 0 20px
+  padding: 280px 45px 0 15px
   text-align: center
+  &.about
+    background-image: url('/header-about.png')
+
+.fade-enter-active,
+.fade-leave-active
+  transition: opacity .2s
+.fade-enter,
+.fade-leave-active
+  opacity: 0

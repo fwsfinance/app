@@ -72,7 +72,7 @@ export default {
   fontawesome: {
     icons: {
       brands: ['faGithub', 'faTwitter'],
-      solid: ['faCircleNotch'],
+      solid: ['faCircleNotch', 'faChevronLeft'],
     },
   },
 

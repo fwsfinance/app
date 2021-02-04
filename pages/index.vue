@@ -4,126 +4,153 @@
   >
     <div id="header"></div>
     <h5 class="mb-5 text-center"></h5>
-    <div class="bg-brand px-5 py-4 text-center">
-      <div v-if="isEthereumBrowser">
-        <div v-if="showDataError">
-          <div class="mb-3">
-            Something went wrong when fetching the data we need. :(
-            <div v-if="wrongChain">
-              Please connect your Metamask wallet with the Ethereum mainnet and
-              then try again.
-            </div>
-          </div>
-          <a :href="loginUrl" class="btn btn-brand btn-lg">Try again</a>
-        </div>
-        <div v-else-if="loadingData">
-          Ok, let's see if you can claim something. One second please...<br />
-          <font-awesome-icon
-            :icon="['fas', 'circle-notch']"
-            spin
-            class="mt-3"
-          />
-        </div>
-        <div v-else-if="user">
-          <h3 class="font-weight-bold">Hey {{ user.name }}!</h3>
-          <div v-if="hasClaimed">
-            It seems you've already claimed your airdrop. Did you add the token
-            address to your wallet, so you can see your funds?<br /><br />
-            <b>{{ fwsAddress }}</b>
-          </div>
-          <div v-else-if="isNew">
-            Sorry! It seems you're account was created just recently.
-            Unfortunately we can't issue tokens for accounts created after this
-            project launched.
-          </div>
-          <div v-else-if="ethAddress">
-            <div v-if="claimAmount">
-              <div v-if="claimError" class="mb-2">
-                Shhoooot! Something went wrong that really should not!<br />
-                {{ claimError }}<br />
-                We are sorry. :'(
-              </div>
-              <div v-if="showClaimSuccess">
-                <br />Perfect! You have {{ claimAmount }} FWS now.<br />If you
-                haven't done so yet, learn
-                <a
-                  href="https://metamask.zendesk.com/hc/en-us/articles/360015489031-How-to-View-See-Your-Tokens-and-Custom-Tokens-in-Metamask"
-                  >here</a
-                >
-                how to add a new token's balance to your Metamask wallet.<br />
-                <br />
-                Token Address:<br /><b>{{ fwsAddress }}</b>
-              </div>
-              <div v-else>
-                <div>
-                  <b>
-                    Great! You can claim {{ claimAmount }} FWS, or "fun coupons"
-                    as we call them.
-                  </b>
-                </div>
-                <div>(Current Supply: {{ totalSupplyFormatted }})</div>
-                <button
-                  class="btn btn-brand btn-lg mt-3"
-                  :disabled="requestingClaim || confirmingClaim"
-                  @click="claim()"
-                >
-                  <span v-if="requestingClaim">
-                    <font-awesome-icon :icon="['fas', 'circle-notch']" spin />
-                    sending request...
-                  </span>
-                  <span v-else-if="confirmingClaim">
-                    <font-awesome-icon :icon="['fas', 'circle-notch']" spin />
-                    waiting for confirmation...
-                  </span>
-                  <span v-else>Ok, cool. Now give it to me!</span>
-                </button>
-                <div v-if="isMod" class="mt-3">
-                  By the way... Looks like you are a <b>moderator</b>. Each time
-                  a user claims tokens, 5% of them are distributed to the
-                  moderators. But only those who already claimed their own
-                  airdrop. So just claim your tokens now and watch your balance
-                  grow even more over time.
+    <transition name="fade">
+      <div v-if="textIsTyped">
+        <div class="bg-brand px-5 py-4 text-center">
+          <div v-if="isEthereumBrowser">
+            <div v-if="showDataError">
+              <div class="mb-3">
+                Something went wrong when fetching the data we need. :(
+                <div v-if="wrongChain">
+                  Please connect your Metamask wallet with the Ethereum mainnet
+                  and then try again.
                 </div>
               </div>
+              <a :href="loginUrl" class="btn btn-brand btn-lg">Try again</a>
             </div>
-            <div v-else class="pt-3">
-              Too bad. You are not eligable to claim anything. :(<br />
-              Your account is either too new or you weren't involved enough.
-              <span v-if="!subscription">
-                It seems you didn't even join the subreddit.
-              </span>
+            <div v-else-if="loadingData">
+              Ok, let's see if you can claim something. One second please...<br />
+              <font-awesome-icon
+                :icon="['fas', 'circle-notch']"
+                spin
+                class="mt-3"
+              />
             </div>
+            <div v-else-if="user">
+              <h3 class="font-weight-bold">Hey {{ user.name }}!</h3>
+              <div v-if="hasClaimed">
+                It seems you've already claimed your airdrop. Did you add the
+                token address to your wallet, so you can see your funds?<br /><br />
+                <b>{{ fwsAddress }}</b>
+              </div>
+              <div v-else-if="isNew">
+                Sorry! It seems you're account was created just recently.
+                Unfortunately we can't issue tokens for accounts created after
+                this project launched.
+              </div>
+              <div v-else-if="ethAddress">
+                <div v-if="claimAmount">
+                  <div v-if="claimError" class="mb-2">
+                    Shhoooot! Something went wrong that really should not!<br />
+                    {{ claimError }}<br />
+                    We are sorry. :'(
+                  </div>
+                  <div v-if="showClaimSuccess">
+                    <br />Perfect! You have {{ claimAmount }} FWS now.<br />If
+                    you haven't done so yet, learn
+                    <a
+                      href="https://metamask.zendesk.com/hc/en-us/articles/360015489031-How-to-View-See-Your-Tokens-and-Custom-Tokens-in-Metamask"
+                      >here</a
+                    >
+                    how to add a new token's balance to your Metamask wallet.<br />
+                    <br />
+                    Token Address:<br /><b>{{ fwsAddress }}</b>
+                  </div>
+                  <div v-else>
+                    <div>
+                      <b>
+                        Great! You can claim {{ claimAmount }} FWS, or "fun
+                        coupons" as we call them.
+                      </b>
+                    </div>
+                    <div>(Current Supply: {{ totalSupplyFormatted }})</div>
+                    <button
+                      class="btn btn-brand btn-lg mt-3"
+                      :disabled="requestingClaim || confirmingClaim"
+                      @click="claim()"
+                    >
+                      <span v-if="requestingClaim">
+                        <font-awesome-icon
+                          :icon="['fas', 'circle-notch']"
+                          spin
+                        />
+                        sending request...
+                      </span>
+                      <span v-else-if="confirmingClaim">
+                        <font-awesome-icon
+                          :icon="['fas', 'circle-notch']"
+                          spin
+                        />
+                        waiting for confirmation...
+                      </span>
+                      <span v-else>Ok, cool. Now give it to me!</span>
+                    </button>
+                    <div v-if="isMod" class="mt-3">
+                      By the way... Looks like you are a <b>moderator</b>. Each
+                      time a user claims tokens, 5% of them are distributed to
+                      the moderators. But only those who already claimed their
+                      own airdrop. So just claim your tokens now and watch your
+                      balance grow even more over time.
+                    </div>
+                  </div>
+                </div>
+                <div v-else class="pt-3">
+                  Too bad. You are not eligable to claim anything. :(<br />
+                  Your account is either too new or you weren't involved enough.
+                  <span v-if="!subscription">
+                    It seems you didn't even join the subreddit.
+                  </span>
+                </div>
+              </div>
+              <button v-else class="btn btn-brand btn-lg" @click="connect()">
+                Connect Wallet
+              </button>
+            </div>
+            <a v-else :href="loginUrl" class="btn btn-brand btn-lg">
+              Ok, how much do I get?
+            </a>
           </div>
-          <button v-else class="btn btn-brand btn-lg" @click="connect()">
-            Connect Wallet
-          </button>
+          <a
+            v-else
+            href="https://metamask.io"
+            target="_blank"
+            class="btn btn-brand btn-lg"
+          >
+            Install MetaMask
+          </a>
         </div>
-        <a v-else :href="loginUrl" class="btn btn-brand btn-lg">
-          Ok, how much do I get?
-        </a>
+        <footer class="my-5 text-center">
+          <small
+            ><nuxt-link to="about">What the F#$% is this?</nuxt-link></small
+          >
+          <div class="mt-4">
+            <a
+              href="https://github.com/fwsfinance"
+              target="_blank"
+              class="mx-2"
+            >
+              <font-awesome-icon :icon="['fab', 'github']" class="fa-2x" />
+            </a>
+            <a
+              href="https://github.com/fwsfinance"
+              target="_blank"
+              class="mx-2"
+            >
+              <font-awesome-icon :icon="['fab', 'twitter']" class="fa-2x" />
+            </a>
+          </div>
+        </footer>
       </div>
-      <a
-        v-else
-        href="https://metamask.io"
-        target="_blank"
-        class="btn btn-brand btn-lg"
-      >
-        Install MetaMask
-      </a>
-    </div>
-    <footer class="my-5">
-      <a href="https://github.com/fwsfinance" target="_blank" class="mx-2">
-        <font-awesome-icon :icon="['fab', 'github']" class="fa-2x" />
-      </a>
-      <a href="https://github.com/fwsfinance" target="_blank" class="mx-2">
-        <font-awesome-icon :icon="['fab', 'twitter']" class="fa-2x" />
-      </a>
-    </footer>
+    </transition>
   </div>
 </template>
 
 <script>
 export default {
+  transition: {
+    name: 'fade',
+    mode: 'out-in',
+  },
   data() {
     return {
       loginUrl: `https://www.reddit.com/api/v1/authorize.compact?client_id=${process.env.REDDIT_CLIENT_ID}&response_type=code&state=random&redirect_uri=${process.env.REDIRECT_URL}&duration=temporary&scope=mysubreddits,identity,history`,
@@ -142,6 +169,7 @@ export default {
       totalSupply: 0,
       hasInteractedBeforeLaunch: false,
       hasClaimed: false,
+      textIsTyped: false,
     }
   },
   computed: {
@@ -321,26 +349,40 @@ export default {
     typeTexts() {
       const texts = [
         'Reddit, huh?',
-        ' Ok, this way... after me.',
-        " This is our time, isn't it?",
+        ' Ok, this way... follow me.',
+        " This is our time now, isn't it?",
         ' Right!',
         " Here! Take these fun coupons and don't forget to give Wall Street some slow claps.",
         ' ;)',
       ]
       setTimeout(() => this.typeText(texts[0]), 1000)
-      setTimeout(() => this.typeText(texts[1]), 3000)
-      setTimeout(() => this.typeText(texts[2]), 6000)
-      setTimeout(() => this.typeText(texts[3]), 8000)
-      setTimeout(() => this.typeText(texts[4]), 10000)
-      setTimeout(() => this.typeText(texts[5]), 16000)
+      setTimeout(() => this.typeText(texts[1]), 2500)
+      setTimeout(
+        () => (document.getElementById('header').innerHTML += '<br />'),
+        4000
+      )
+      setTimeout(() => this.typeText(texts[2]), 4000)
+      setTimeout(() => this.typeText(texts[3]), 6000)
+      setTimeout(
+        () => (document.getElementById('header').innerHTML += '<br />'),
+        8000
+      )
+      setTimeout(() => this.typeText(texts[4]), 8000)
+      setTimeout(
+        () => (document.getElementById('header').innerHTML += '<br />'),
+        13000
+      )
+      setTimeout(() => this.typeText(texts[5]), 13000)
+      setTimeout(() => (this.textIsTyped = true), 11500)
     },
     typeText(text, pos = 0) {
       if (pos < text.length) {
         document.getElementById('header').innerHTML += text.charAt(pos)
-        setTimeout(() => this.typeText(text, pos + 1), 50)
+        setTimeout(() => this.typeText(text, pos + 1), 30)
       }
     },
     putText() {
+      this.textIsTyped = true
       document.getElementById('header').innerHTML =
         "Reddit, huh? Ok, this way... after me. This is our time, isn't it? Right! Here! Take these fun coupons and don't forget to give Wall Street some slow claps. ;)"
     },
