@@ -2,7 +2,7 @@
   <div
     class="container py-5 d-flex flex-column justify-content-center align-items-center"
   >
-    <img src="header.png" style="max-width: 95%" />
+    <div id="header"></div>
     <h5 class="mb-5 text-center"></h5>
     <div class="bg-brand px-5 py-4 text-center">
       <div v-if="isEthereumBrowser">
@@ -211,6 +211,7 @@ export default {
     const error = urlParams.get('error')
     const code = urlParams.get('code')
     if (code && !error) {
+      this.putText()
       this.loadingData = true
       this.$axios
         .$post(process.env.API_URL + '/access-token', {
@@ -264,6 +265,8 @@ export default {
             })
         })
         .catch(() => (this.loadingData = false))
+    } else {
+      this.typeTexts()
     }
   },
   methods: {
@@ -314,6 +317,32 @@ export default {
           })
           .catch((e) => (this.requestingClaim = false))
       }
+    },
+    typeTexts() {
+      const texts = [
+        'Reddit, huh?',
+        ' Ok, this way... after me.',
+        " This is our time, isn't it?",
+        ' Right!',
+        " Here! Take these fun coupons and don't forget to give Wall Street some slow claps.",
+        ' ;)',
+      ]
+      setTimeout(() => this.typeText(texts[0]), 1000)
+      setTimeout(() => this.typeText(texts[1]), 3000)
+      setTimeout(() => this.typeText(texts[2]), 6000)
+      setTimeout(() => this.typeText(texts[3]), 8000)
+      setTimeout(() => this.typeText(texts[4]), 10000)
+      setTimeout(() => this.typeText(texts[5]), 16000)
+    },
+    typeText(text, pos = 0) {
+      if (pos < text.length) {
+        document.getElementById('header').innerHTML += text.charAt(pos)
+        setTimeout(() => this.typeText(text, pos + 1), 50)
+      }
+    },
+    putText() {
+      document.getElementById('header').innerHTML =
+        "Reddit, huh? Ok, this way... after me. This is our time, isn't it? Right! Here! Take these fun coupons and don't forget to give Wall Street some slow claps. ;)"
     },
   },
 }
