@@ -346,40 +346,46 @@ export default {
           .catch((e) => (this.requestingClaim = false))
       }
     },
-    typeTexts() {
-      const texts = [
-        'Reddit, huh?',
-        ' Ok, this way... follow me.',
-        " This is our time now, isn't it?",
-        ' Right!',
-        " Here! Take these fun coupons and don't forget to give Wall Street some slow claps.",
-        ' ;)',
-      ]
-      setTimeout(() => this.typeText(texts[0]), 1000)
-      setTimeout(() => this.typeText(texts[1]), 2500)
-      setTimeout(
-        () => (document.getElementById('header').innerHTML += '<br />'),
-        4000
+    async typeTexts() {
+      await this.pause(2000)
+      await this.typeText('Reddit, huh?')
+      await this.pause(1000)
+      await this.typeText(' Ok, this way...')
+      await this.pause(500)
+      await this.typeText(' Follow me!')
+      await this.pause(1000)
+      document.getElementById('header').innerHTML += '<br />'
+      await this.typeText(" This is our time now, isn't it?")
+      await this.pause(500)
+      await this.typeText(' Right!')
+      await this.pause(1000)
+      document.getElementById('header').innerHTML += '<br />'
+      await this.typeText(' Here!')
+      await this.pause(1000)
+      await this.typeText(
+        " Take these fun coupons and don't forget to give Wall Street some slow claps."
       )
-      setTimeout(() => this.typeText(texts[2]), 4000)
-      setTimeout(() => this.typeText(texts[3]), 6000)
-      setTimeout(
-        () => (document.getElementById('header').innerHTML += '<br />'),
-        8000
-      )
-      setTimeout(() => this.typeText(texts[4]), 8000)
-      setTimeout(
-        () => (document.getElementById('header').innerHTML += '<br />'),
-        13000
-      )
-      setTimeout(() => this.typeText(texts[5]), 13000)
-      setTimeout(() => (this.textIsTyped = true), 11500)
+      this.textIsTyped = true
+      await this.pause(3000)
+      document.getElementById('header').innerHTML += '<br />'
+      await this.typeText(';)')
     },
-    typeText(text, pos = 0) {
-      if (pos < text.length) {
-        document.getElementById('header').innerHTML += text.charAt(pos)
-        setTimeout(() => this.typeText(text, pos + 1), 30)
+    async typeText(text, pos = 0) {
+      while (pos < text.length) {
+        await this.typeLetter(text.charAt(pos))
+        pos++
       }
+    },
+    typeLetter(text, pos = 0) {
+      return new Promise((resolve) => {
+        document.getElementById('header').innerHTML += text.charAt(pos)
+        setTimeout(resolve, 40)
+      })
+    },
+    pause(duration) {
+      return new Promise((resolve) => {
+        setTimeout(resolve, duration)
+      })
     },
     putText() {
       this.textIsTyped = true
