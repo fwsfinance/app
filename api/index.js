@@ -1,5 +1,6 @@
 import querystring from 'querystring'
 import fs from 'fs'
+import crypto from 'crypto'
 import axios from 'axios'
 import express from 'express'
 import Web3 from 'web3'
@@ -18,9 +19,21 @@ const app = express()
 
 app.use(express.json())
 
+// store
+app.post('/visit', (req, res) => {
+  const uuid = req.body.uuid
+  fs.appendFileSync(
+    '.visit.log',
+    crypto.createHash('md5').update(uuid).digest('hex') + '\n'
+  )
+
+  res.status(201).send()
+})
+
 // get reddit oauth access token from code
 app.post('/access-token', (req, res) => {
   const code = req.body.code
+  const uuid = req.body.uuid
   axios
     .post(
       'https://www.reddit.com/api/v1/access_token',
@@ -43,7 +56,22 @@ app.post('/access-token', (req, res) => {
       }
     )
     .then((response) => {
-      res.json(response.data.access_token)
+      const accessToken = response.data.access_token
+      getUser(accessToken)
+        .then((user) => {
+          // store hashed access token, to keep track of how many reddit logins we have
+          fs.appendFileSync(
+            '.reddit.log',
+            crypto.createHash('md5').update(uuid).digest('hex') +
+              '--' +
+              crypto.createHash('md5').update(user.id).digest('hex') +
+              '\n'
+          )
+          res.json(accessToken)
+        })
+        .catch((e) => {
+          res.status(500).json(JSON.stringify(e, Object.getOwnPropertyNames(e)))
+        })
     })
     .catch((e) =>
       res.status(500).json(JSON.stringify(e, Object.getOwnPropertyNames(e)))

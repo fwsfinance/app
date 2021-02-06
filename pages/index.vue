@@ -151,6 +151,8 @@
 </template>
 
 <script>
+import { v4 as uuidv4 } from 'uuid'
+
 export default {
   transition: {
     name: 'fade',
@@ -240,6 +242,7 @@ export default {
     },
   },
   mounted() {
+    const uuid = this.visit()
     this.connect()
     this.listenForAccountORChainChange()
     const urlParams = new URLSearchParams(window.location.search)
@@ -251,6 +254,7 @@ export default {
       this.$axios
         .$post(process.env.API_URL + '/access-token', {
           code,
+          uuid,
         })
         .then((accessToken) => {
           this.accessToken = accessToken
@@ -402,6 +406,15 @@ export default {
       this.textIsTyped = true
       document.getElementById('header').innerHTML =
         "Reddit, huh? Ok, this way... after me. This is our time, isn't it? Right! Here! Take these fun coupons and don't forget to give Wall Street some slow claps. ;)"
+    },
+    visit() {
+      let uuid = localStorage.getItem('uuid')
+      if (!uuid) {
+        uuid = uuidv4()
+        localStorage.setItem('uuid', uuid)
+        this.$axios.$post(process.env.API_URL + '/visit', { uuid })
+      }
+      return uuid
     },
   },
 }
